@@ -27,9 +27,9 @@ class Audio2Mel(nn.Module):
     def __init__(
         self,
         n_fft=1024,
-        hop_length=256,
-        win_length=1024,
-        sampling_rate=22050,
+        hop_length=200,
+        win_length=800,
+        sampling_rate=16000,
         n_mel_channels=80,
         mel_fmin=0.0,
         mel_fmax=None,
@@ -88,12 +88,12 @@ class ResnetBlock(nn.Module):
 class Generator(nn.Module):
     def __init__(self, input_size, ngf, n_residual_layers):
         super().__init__()
-        ratios = [8, 8, 2, 2]
+        ratios = [5, 5, 4, 2]
         self.hop_length = np.prod(ratios)
         mult = int(2 ** len(ratios))
 
         model = [
-            nn.ReflectionPad1d(3),
+            nn.ReflectionPad1d((6, 0)),
             WNConv1d(input_size, mult * ngf, kernel_size=7, padding=0),
         ]
 
@@ -118,7 +118,7 @@ class Generator(nn.Module):
 
         model += [
             nn.LeakyReLU(0.2),
-            nn.ReflectionPad1d(3),
+            nn.ReflectionPad1d((6, 0)),
             WNConv1d(ngf, 1, kernel_size=7, padding=0),
             nn.Tanh(),
         ]

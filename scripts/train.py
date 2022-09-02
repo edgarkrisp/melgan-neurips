@@ -32,7 +32,7 @@ def parse_args():
 
     parser.add_argument("--data_path", default=None, type=Path)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--seq_len", type=int, default=8192)
+    parser.add_argument("--seq_len", type=int, default=12800)
 
     parser.add_argument("--epochs", type=int, default=3000)
     parser.add_argument("--log_interval", type=int, default=100)
@@ -84,12 +84,12 @@ def main():
     # Create data loaders #
     #######################
     train_set = AudioDataset(
-        Path(args.data_path) / "train_files.txt", args.seq_len, sampling_rate=22050
+        Path(args.data_path) / "train_files.txt", args.seq_len, sampling_rate=16000
     )
     test_set = AudioDataset(
         Path(args.data_path) / "test_files.txt",
         22050 * 4,
-        sampling_rate=22050,
+        sampling_rate=16000,
         augment=False,
     )
 

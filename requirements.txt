@@ -1,5 +1,8 @@
+--extra-index-url https://download.pytorch.org/whl/cu113
 torch
-librosa
+librosa==0.8.0
 pyyaml
-scipy
+scipy==1.8.1
+numba==0.56.0
+numpy==1.22.4
 argparse
