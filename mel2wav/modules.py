@@ -5,6 +5,7 @@ from librosa.filters import mel as librosa_mel_fn
 from torch.nn.utils import weight_norm
 import numpy as np
 
+from mel2wav.causal_blocks import CausalConv1d, CausalConvTranspose1d, ResidualUnit
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -94,14 +95,14 @@ class Generator(nn.Module):
 
         model = [
             nn.ReflectionPad1d((6, 0)),
-            WNConv1d(input_size, mult * ngf, kernel_size=7, padding=0),
+            CausalConv1d(input_size, mult * ngf, kernel_size=7, padding=0),
         ]
 
         # Upsample to raw audio scale
         for i, r in enumerate(ratios):
             model += [
-                nn.LeakyReLU(0.2),
-                WNConvTranspose1d(
+                nn.ELU(),
+                CausalConvTranspose1d(
                     mult * ngf,
                     mult * ngf // 2,
                     kernel_size=r * 2,
@@ -112,14 +113,14 @@ class Generator(nn.Module):
             ]
 
             for j in range(n_residual_layers):
-                model += [ResnetBlock(mult * ngf // 2, dilation=3 ** j)]
+                model += [ResidualUnit(mult * ngf // 2, dilation=3 ** j)]
 
             mult //= 2
 
         model += [
-            nn.LeakyReLU(0.2),
+            nn.ELU(),
             nn.ReflectionPad1d((6, 0)),
-            WNConv1d(ngf, 1, kernel_size=7, padding=0),
+            CausalConv1d(ngf, 1, kernel_size=7, padding=0),
             nn.Tanh(),
         ]
 
