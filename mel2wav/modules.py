@@ -94,7 +94,6 @@ class Generator(nn.Module):
         mult = int(2 ** len(ratios))
 
         model = [
-            nn.ReflectionPad1d((6, 0)),
             CausalConv1d(input_size, mult * ngf, kernel_size=7, padding=0),
         ]
 
@@ -107,8 +106,8 @@ class Generator(nn.Module):
                     mult * ngf // 2,
                     kernel_size=r * 2,
                     stride=r,
-                    padding=r // 2 + r % 2,
-                    output_padding=r % 2,
+                    padding=0,
+                    output_padding=0,
                 ),
             ]
 
@@ -119,7 +118,6 @@ class Generator(nn.Module):
 
         model += [
             nn.ELU(),
-            nn.ReflectionPad1d((6, 0)),
             CausalConv1d(ngf, 1, kernel_size=7, padding=0),
             nn.Tanh(),
         ]

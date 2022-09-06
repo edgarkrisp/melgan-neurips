@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import weight_norm
 
-from vector_quantize_pytorch import ResidualVQ
-
 # Generator
 
 
