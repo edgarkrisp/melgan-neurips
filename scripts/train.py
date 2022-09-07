@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument("--n_layers_D", type=int, default=4)
     parser.add_argument("--downsamp_factor", type=int, default=4)
     parser.add_argument("--lambda_feat", type=float, default=10)
-    parser.add_argument("--lambda_spec", type=float, default=1)
+    parser.add_argument("--lambda_spec", type=float, default=0.1)
     parser.add_argument("--cond_disc", action="store_true")
 
     parser.add_argument("--data_path", default=None, type=Path)
@@ -164,7 +164,9 @@ def main():
             ###################
             D_fake = netD(x_pred_t.cuda())
             loss_spec = spec_reconstruction_loss(
-                x_pred_t.cuda(), x_t, spec_reconstruction_loss_coefs)
+                x_pred_t.squeeze(1).cuda(),
+                x_t.squeeze(1).cuda(),
+                spec_reconstruction_loss_coefs)
 
             loss_G = 0
             for scale in D_fake:
@@ -185,7 +187,7 @@ def main():
             ######################
             # Update tensorboard #
             ######################
-            costs.append([loss_D.item(), loss_G.item(), loss_feat.item(), loss_spec.item(), s_error])
+            costs.append([0, 0, 0, loss_spec.item(), s_error])
 
             writer.add_scalar("loss/discriminator", costs[-1][0], steps)
             writer.add_scalar("loss/generator", costs[-1][1], steps)
