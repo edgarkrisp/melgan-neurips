@@ -5,7 +5,7 @@ sys.path.append(dirname(dirname(__file__)))
 
 from mel2wav.dataset import AudioDataset
 from mel2wav.modules import Generator, Discriminator, Audio2Mel
-from mel2wav.utils import save_sample
+from mel2wav.utils import save_sample, spec_reconstruction_loss
 
 import torch
 import torch.nn.functional as F
@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument("--n_layers_D", type=int, default=4)
     parser.add_argument("--downsamp_factor", type=int, default=4)
     parser.add_argument("--lambda_feat", type=float, default=10)
+    parser.add_argument("--lambda_spec", type=float, default=1)
     parser.add_argument("--cond_disc", action="store_true")
 
     parser.add_argument("--data_path", default=None, type=Path)
@@ -65,10 +66,13 @@ def main():
     # Load PyTorch Models #
     #######################
     netG = Generator(args.n_mel_channels, args.ngf, args.n_residual_layers).cuda()
+    print(f"Number of parameters in Generator: {sum(x.numel() for x in netG.parameters())}")
     netD = Discriminator(
         args.num_D, args.ndf, args.n_layers_D, args.downsamp_factor
     ).cuda()
     fft = Audio2Mel(n_mel_channels=args.n_mel_channels).cuda()
+
+    spec_reconstruction_loss_coefs = [64, 128, 256, 512, 1024, 2048]
 
     print(netG)
     print(netD)
@@ -159,6 +163,8 @@ def main():
             # Train Generator #
             ###################
             D_fake = netD(x_pred_t.cuda())
+            loss_spec = spec_reconstruction_loss(
+                x_pred_t.cuda(), x_t, spec_reconstruction_loss_coefs)
 
             loss_G = 0
             for scale in D_fake:
@@ -173,18 +179,19 @@ def main():
                     loss_feat += wt * F.l1_loss(D_fake[i][j], D_real[i][j].detach())
 
             netG.zero_grad()
-            (loss_G + args.lambda_feat * loss_feat).backward()
+            (loss_G + args.lambda_feat * loss_feat + args.lambda_spec * loss_spec).backward()
             optG.step()
 
             ######################
             # Update tensorboard #
             ######################
-            costs.append([loss_D.item(), loss_G.item(), loss_feat.item(), s_error])
+            costs.append([loss_D.item(), loss_G.item(), loss_feat.item(), loss_spec.item(), s_error])
 
             writer.add_scalar("loss/discriminator", costs[-1][0], steps)
             writer.add_scalar("loss/generator", costs[-1][1], steps)
             writer.add_scalar("loss/feature_matching", costs[-1][2], steps)
-            writer.add_scalar("loss/mel_reconstruction", costs[-1][3], steps)
+            writer.add_scalar("loss/spec_reconstruction", costs[-1][3], steps)
+            writer.add_scalar("loss/mel_reconstruction", costs[-1][4], steps)
             steps += 1
 
             if steps % args.save_interval == 0:
