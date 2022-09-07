@@ -21,7 +21,7 @@ def load_model(mel2wav_path, device=get_default_device()):
     """
     root = Path(mel2wav_path)
     with open(root / "args.yml", "r") as f:
-        args = yaml.load(f, Loader=yaml.FullLoader)
+        args = yaml.load(f, Loader=yaml.UnsafeLoader)
     netG = Generator(args.n_mel_channels, args.ngf, args.n_residual_layers).to(device)
     netG.load_state_dict(torch.load(root / "best_netG.pt", map_location=device))
     return netG
