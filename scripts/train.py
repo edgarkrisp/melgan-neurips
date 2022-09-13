@@ -187,7 +187,7 @@ def main():
             ######################
             # Update tensorboard #
             ######################
-            costs.append([0, 0, 0, loss_spec.item(), s_error])
+            costs.append([loss_D.item(), loss_G.item(), loss_feat.item(), loss_spec.item(), s_error])
 
             writer.add_scalar("loss/discriminator", costs[-1][0], steps)
             writer.add_scalar("loss/generator", costs[-1][1], steps)
